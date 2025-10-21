@@ -94,7 +94,7 @@ const Home = () => {
             <div className="space-y-8 animate-fade-in">
               <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full">
                 <Sparkles className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium text-primary">Nouvelle Collection 2024</span>
+                <span className="text-sm font-medium text-primary">Nouvelle Collection 2025</span>
               </div>
               <h1 className="text-5xl md:text-7xl font-serif font-bold text-foreground leading-tight">
                 Sublimez Votre Intérieur avec l'Art Marocain

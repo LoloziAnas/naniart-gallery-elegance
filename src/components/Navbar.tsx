@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useCart } from "@/contexts/CartContext";
+import { useWishlist } from "@/contexts/WishlistContext";
 import { Menu, X, ShoppingCart, ChevronDown, Search, User, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +20,8 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const location = useLocation();
+  const { getCartCount } = useCart();
+  const { getWishlistCount } = useWishlist();
 
   const isActive = (path: string) => location.pathname === path;
   
@@ -429,15 +433,26 @@ const Navbar = () => {
             <Button variant="ghost" size="icon" className="hidden lg:flex h-9 w-9">
               <User className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="hidden lg:flex h-9 w-9">
-              <Heart className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="relative h-9 w-9">
-              <ShoppingCart className="h-4 w-4" />
-              <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-semibold">
-                0
-              </span>
-            </Button>
+            <Link to="/wishlist">
+              <Button variant="ghost" size="icon" className="hidden lg:flex h-9 w-9 relative">
+                <Heart className="h-4 w-4" />
+                {getWishlistCount() > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-semibold">
+                    {getWishlistCount()}
+                  </span>
+                )}
+              </Button>
+            </Link>
+            <Link to="/cart">
+              <Button variant="ghost" size="icon" className="relative h-9 w-9">
+                <ShoppingCart className="h-4 w-4" />
+                {getCartCount() > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-semibold">
+                    {getCartCount()}
+                  </span>
+                )}
+              </Button>
+            </Link>
 
             {/* Mobile Menu Button */}
             <button
@@ -632,6 +647,79 @@ const Navbar = () => {
                 )}
               </div>
 
+              {/* User Actions Section */}
+              <div className="border-t border-border/50 bg-secondary/10">
+                <div className="p-4 space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                    Mon Compte
+                  </p>
+                  
+                  {/* Wishlist */}
+                  <Link
+                    to="/wishlist"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center justify-between py-3 px-4 bg-white rounded-lg hover:bg-primary/5 transition-smooth shadow-sm"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center">
+                        <Heart className="h-5 w-5 text-red-500" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-sm">Mes Favoris</p>
+                        <p className="text-xs text-muted-foreground">
+                          {getWishlistCount()} article{getWishlistCount() > 1 ? 's' : ''}
+                        </p>
+                      </div>
+                    </div>
+                    {getWishlistCount() > 0 && (
+                      <span className="bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-semibold">
+                        {getWishlistCount()}
+                      </span>
+                    )}
+                  </Link>
+
+                  {/* Cart */}
+                  <Link
+                    to="/cart"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center justify-between py-3 px-4 bg-white rounded-lg hover:bg-primary/5 transition-smooth shadow-sm"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                        <ShoppingCart className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-sm">Mon Panier</p>
+                        <p className="text-xs text-muted-foreground">
+                          {getCartCount()} article{getCartCount() > 1 ? 's' : ''}
+                        </p>
+                      </div>
+                    </div>
+                    {getCartCount() > 0 && (
+                      <span className="bg-primary text-primary-foreground text-xs rounded-full h-6 w-6 flex items-center justify-center font-semibold">
+                        {getCartCount()}
+                      </span>
+                    )}
+                  </Link>
+
+                  {/* User Account (Placeholder) */}
+                  <button
+                    onClick={() => setIsOpen(false)}
+                    className="w-full flex items-center justify-between py-3 px-4 bg-white rounded-lg hover:bg-primary/5 transition-smooth shadow-sm"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center">
+                        <User className="h-5 w-5 text-foreground" />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-semibold text-sm">Mon Compte</p>
+                        <p className="text-xs text-muted-foreground">Connexion / Inscription</p>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
               {/* Bottom Links */}
               <div className="border-t border-border/50">
                 <Link
@@ -648,6 +736,18 @@ const Navbar = () => {
                 >
                   🔥 VENTES FLASH
                 </Link>
+              </div>
+
+              {/* Search Bar (Mobile) */}
+              <div className="border-t border-border/50 p-4 bg-secondary/5">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Rechercher une œuvre..."
+                    className="w-full pl-10 pr-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-smooth"
+                  />
+                </div>
               </div>
             </div>
           </div>

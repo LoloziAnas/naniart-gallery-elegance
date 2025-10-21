@@ -1,5 +1,7 @@
-import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { useCart } from "@/contexts/CartContext";
+import { useWishlist } from "@/contexts/WishlistContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +13,10 @@ import artwork3 from "@/assets/artwork-3.jpg";
 
 const Product = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
+  const { addToCart } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
   
   // State management
   const [selectedImage, setSelectedImage] = useState(0);
@@ -19,7 +24,6 @@ const Product = () => {
   const [selectedFormat, setSelectedFormat] = useState("toile");
   const [quantity, setQuantity] = useState(1);
   const [isZoomed, setIsZoomed] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
 
   // Mock product data with multiple images
   const product = {
@@ -66,19 +70,38 @@ const Product = () => {
   ];
 
   const handleAddToCart = () => {
-    toast({
-      title: "Ajouté au panier",
-      description: `${quantity} x ${product.title} (${selectedSizeOption?.label}) ajouté à votre panier.`,
-    });
+    // Extract numeric price value
+    const priceValue = finalPrice;
+    
+    // Add each quantity as separate items or handle in cart
+    for (let i = 0; i < quantity; i++) {
+      addToCart({
+        id: `${product.id}-${selectedSize}-${selectedFormat}-${Date.now()}-${i}`,
+        title: product.title,
+        artist: product.artist,
+        price: `${priceValue.toLocaleString()} MAD`,
+        priceValue: priceValue,
+        image: product.images[0],
+        size: selectedSizeOption?.label,
+        frame: selectedFormatOption?.label,
+      });
+    }
   };
   
   const handleToggleFavorite = () => {
-    setIsFavorite(!isFavorite);
-    toast({
-      title: isFavorite ? "Retiré des favoris" : "Ajouté aux favoris",
-      description: isFavorite ? "L'œuvre a été retirée de vos favoris." : "L'œuvre a été ajoutée à vos favoris.",
+    toggleWishlist({
+      id: product.id || '',
+      title: product.title,
+      artist: product.artist,
+      price: `${finalPrice.toLocaleString()} MAD`,
+      priceValue: finalPrice,
+      image: product.images[0],
+      category: product.category,
+      inStock: product.inStock,
     });
   };
+  
+  const isFavorite = isInWishlist(product.id || '');
   
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
