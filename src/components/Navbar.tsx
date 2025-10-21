@@ -16,9 +16,14 @@ import artwork3 from "@/assets/artwork-3.jpg";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const location = useLocation();
 
   const isActive = (path: string) => location.pathname === path;
+  
+  const toggleSection = (section: string) => {
+    setExpandedSection(expandedSection === section ? null : section);
+  };
 
   const themeCategories = [
     { name: "ART ABSTRAIT", slug: "abstrait" },
@@ -399,15 +404,7 @@ const Navbar = () => {
               </NavigationMenuItem>
 
               <NavigationMenuItem>
-                <Link to="/tips">
-                  <NavigationMenuLink className="px-3 py-2 text-xs font-semibold text-foreground hover:text-primary transition-smooth uppercase tracking-wider">
-                    ARTISTES
-                  </NavigationMenuLink>
-                </Link>
-              </NavigationMenuItem>
-
-              <NavigationMenuItem>
-                <Link to="/contact">
+                <Link to="/reviews">
                   <NavigationMenuLink className="px-3 py-2 text-xs font-semibold text-foreground hover:text-primary transition-smooth uppercase tracking-wider">
                     AVIS CLIENTS
                   </NavigationMenuLink>
@@ -453,51 +450,206 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Enhanced Mobile Navigation */}
         {isOpen && (
-          <div className="lg:hidden py-4 space-y-2 border-t border-border animate-fade-in">
-            <Link
-              to="/gallery?filter=nouveautes"
-              onClick={() => setIsOpen(false)}
-              className="block py-2 text-sm font-medium text-foreground hover:text-primary transition-smooth uppercase"
-            >
-              NOUVEAUTÉS
-            </Link>
-            <Link
-              to="/gallery?filter=bestsellers"
-              onClick={() => setIsOpen(false)}
-              className="block py-2 text-sm font-medium text-foreground hover:text-primary transition-smooth uppercase"
-            >
-              BESTSELLERS
-            </Link>
-            <Link
-              to="/gallery"
-              onClick={() => setIsOpen(false)}
-              className="block py-2 text-sm font-medium text-foreground hover:text-primary transition-smooth uppercase"
-            >
-              THÈMES
-            </Link>
-            <Link
-              to="/tips"
-              onClick={() => setIsOpen(false)}
-              className="block py-2 text-sm font-medium text-foreground hover:text-primary transition-smooth uppercase"
-            >
-              ARTISTES
-            </Link>
-            <Link
-              to="/contact"
-              onClick={() => setIsOpen(false)}
-              className="block py-2 text-sm font-medium text-foreground hover:text-primary transition-smooth uppercase"
-            >
-              AVIS CLIENTS
-            </Link>
-            <Link
-              to="/gallery?filter=flash"
-              onClick={() => setIsOpen(false)}
-              className="block py-2 text-sm font-medium text-destructive hover:text-destructive/80 transition-smooth uppercase"
-            >
-              VENTES FLASH
-            </Link>
+          <div className="lg:hidden border-t border-border animate-fade-in max-h-[calc(100vh-80px)] overflow-y-auto">
+            <div className="py-4 space-y-1">
+              {/* Quick Links */}
+              <Link
+                to="/gallery?filter=nouveautes"
+                onClick={() => setIsOpen(false)}
+                className="block py-3 px-4 text-sm font-semibold text-foreground hover:bg-primary/10 hover:text-primary transition-smooth uppercase tracking-wide"
+              >
+                NOUVEAUTÉS
+              </Link>
+              <Link
+                to="/gallery?filter=bestsellers"
+                onClick={() => setIsOpen(false)}
+                className="block py-3 px-4 text-sm font-semibold text-foreground hover:bg-primary/10 hover:text-primary transition-smooth uppercase tracking-wide"
+              >
+                BESTSELLERS
+              </Link>
+
+              {/* Thèmes Dropdown */}
+              <div className="border-t border-border/50">
+                <button
+                  onClick={() => toggleSection('themes')}
+                  className="w-full flex items-center justify-between py-3 px-4 text-sm font-semibold text-foreground hover:bg-primary/10 transition-smooth uppercase tracking-wide"
+                >
+                  <span>THÈMES</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${expandedSection === 'themes' ? 'rotate-180' : ''}`} />
+                </button>
+                {expandedSection === 'themes' && (
+                  <div className="bg-secondary/20 py-2 px-4 space-y-1 animate-fade-in">
+                    {themeCategories.map((category) => (
+                      <Link
+                        key={category.slug}
+                        to={`/gallery?theme=${category.slug}`}
+                        onClick={() => setIsOpen(false)}
+                        className="block py-2 px-3 text-xs font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 rounded transition-smooth uppercase"
+                      >
+                        {category.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Format Dropdown */}
+              <div className="border-t border-border/50">
+                <button
+                  onClick={() => toggleSection('format')}
+                  className="w-full flex items-center justify-between py-3 px-4 text-sm font-semibold text-foreground hover:bg-primary/10 transition-smooth uppercase tracking-wide"
+                >
+                  <span>FORMAT</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${expandedSection === 'format' ? 'rotate-180' : ''}`} />
+                </button>
+                {expandedSection === 'format' && (
+                  <div className="bg-secondary/20 py-2 px-4 space-y-1 animate-fade-in">
+                    <Link
+                      to="/gallery?format=carre"
+                      onClick={() => setIsOpen(false)}
+                      className="block py-2 px-3 text-xs font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 rounded transition-smooth uppercase"
+                    >
+                      CARRÉ
+                    </Link>
+                    <Link
+                      to="/gallery?format=vertical"
+                      onClick={() => setIsOpen(false)}
+                      className="block py-2 px-3 text-xs font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 rounded transition-smooth uppercase"
+                    >
+                      VERTICAL
+                    </Link>
+                    <Link
+                      to="/gallery?format=horizontal"
+                      onClick={() => setIsOpen(false)}
+                      className="block py-2 px-3 text-xs font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 rounded transition-smooth uppercase"
+                    >
+                      HORIZONTAL
+                    </Link>
+                    <Link
+                      to="/gallery?format=triptyque"
+                      onClick={() => setIsOpen(false)}
+                      className="block py-2 px-3 text-xs font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 rounded transition-smooth uppercase"
+                    >
+                      TRIPTYQUE
+                    </Link>
+                    <Link
+                      to="/gallery?format=diptyque"
+                      onClick={() => setIsOpen(false)}
+                      className="block py-2 px-3 text-xs font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 rounded transition-smooth uppercase"
+                    >
+                      DIPTYQUE
+                    </Link>
+                    <Link
+                      to="/gallery?format=mur-de-cadre"
+                      onClick={() => setIsOpen(false)}
+                      className="block py-2 px-3 text-xs font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 rounded transition-smooth uppercase"
+                    >
+                      MUR DE CADRE
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              {/* Couleurs Dropdown */}
+              <div className="border-t border-border/50">
+                <button
+                  onClick={() => toggleSection('couleurs')}
+                  className="w-full flex items-center justify-between py-3 px-4 text-sm font-semibold text-foreground hover:bg-primary/10 transition-smooth uppercase tracking-wide"
+                >
+                  <span>COULEURS</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${expandedSection === 'couleurs' ? 'rotate-180' : ''}`} />
+                </button>
+                {expandedSection === 'couleurs' && (
+                  <div className="bg-secondary/20 py-2 px-4 space-y-1 animate-fade-in">
+                    <Link to="/gallery?color=beige" onClick={() => setIsOpen(false)} className="flex items-center gap-3 py-2 px-3 hover:bg-primary/5 rounded transition-smooth">
+                      <div className="w-5 h-5 rounded-full bg-[#D4C5B0] border border-border flex-shrink-0"></div>
+                      <span className="text-xs font-medium text-muted-foreground hover:text-primary">BEIGE</span>
+                    </Link>
+                    <Link to="/gallery?color=terracotta" onClick={() => setIsOpen(false)} className="flex items-center gap-3 py-2 px-3 hover:bg-primary/5 rounded transition-smooth">
+                      <div className="w-5 h-5 rounded-full bg-[#E2725B] border border-border flex-shrink-0"></div>
+                      <span className="text-xs font-medium text-muted-foreground hover:text-primary">TERRACOTTA</span>
+                    </Link>
+                    <Link to="/gallery?color=vert-sauge" onClick={() => setIsOpen(false)} className="flex items-center gap-3 py-2 px-3 hover:bg-primary/5 rounded transition-smooth">
+                      <div className="w-5 h-5 rounded-full bg-[#9CAF88] border border-border flex-shrink-0"></div>
+                      <span className="text-xs font-medium text-muted-foreground hover:text-primary">VERT SAUGE</span>
+                    </Link>
+                    <Link to="/gallery?color=bleu" onClick={() => setIsOpen(false)} className="flex items-center gap-3 py-2 px-3 hover:bg-primary/5 rounded transition-smooth">
+                      <div className="w-5 h-5 rounded-full bg-[#0047AB] border border-border flex-shrink-0"></div>
+                      <span className="text-xs font-medium text-muted-foreground hover:text-primary">BLEU</span>
+                    </Link>
+                    <Link to="/gallery?color=dore" onClick={() => setIsOpen(false)} className="flex items-center gap-3 py-2 px-3 hover:bg-primary/5 rounded transition-smooth">
+                      <div className="w-5 h-5 rounded-full bg-[#D4AF37] border border-border flex-shrink-0"></div>
+                      <span className="text-xs font-medium text-muted-foreground hover:text-primary">DORÉ</span>
+                    </Link>
+                    <Link to="/gallery?color=noir" onClick={() => setIsOpen(false)} className="flex items-center gap-3 py-2 px-3 hover:bg-primary/5 rounded transition-smooth">
+                      <div className="w-5 h-5 rounded-full bg-black border border-border flex-shrink-0"></div>
+                      <span className="text-xs font-medium text-muted-foreground hover:text-primary">NOIR</span>
+                    </Link>
+                    <Link to="/gallery?color=blanc" onClick={() => setIsOpen(false)} className="flex items-center gap-3 py-2 px-3 hover:bg-primary/5 rounded transition-smooth">
+                      <div className="w-5 h-5 rounded-full bg-white border border-border flex-shrink-0"></div>
+                      <span className="text-xs font-medium text-muted-foreground hover:text-primary">BLANC</span>
+                    </Link>
+                    <Link to="/gallery?color=multicoleurs" onClick={() => setIsOpen(false)} className="flex items-center gap-3 py-2 px-3 hover:bg-primary/5 rounded transition-smooth">
+                      <div className="w-5 h-5 rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 border border-border flex-shrink-0"></div>
+                      <span className="text-xs font-medium text-muted-foreground hover:text-primary">MULTICOLEURS</span>
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              {/* Intérieur Dropdown */}
+              <div className="border-t border-border/50">
+                <button
+                  onClick={() => toggleSection('interieur')}
+                  className="w-full flex items-center justify-between py-3 px-4 text-sm font-semibold text-foreground hover:bg-primary/10 transition-smooth uppercase tracking-wide"
+                >
+                  <span>INTÉRIEUR</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${expandedSection === 'interieur' ? 'rotate-180' : ''}`} />
+                </button>
+                {expandedSection === 'interieur' && (
+                  <div className="bg-secondary/20 py-2 px-4 space-y-1 animate-fade-in">
+                    <Link to="/gallery?interior=salon-moderne" onClick={() => setIsOpen(false)} className="block py-2 px-3 text-xs font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 rounded transition-smooth uppercase">
+                      SALON MODERNE
+                    </Link>
+                    <Link to="/gallery?interior=salon-marocain" onClick={() => setIsOpen(false)} className="block py-2 px-3 text-xs font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 rounded transition-smooth uppercase">
+                      SALON MAROCAIN
+                    </Link>
+                    <Link to="/gallery?interior=chambre-a-coucher" onClick={() => setIsOpen(false)} className="block py-2 px-3 text-xs font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 rounded transition-smooth uppercase">
+                      CHAMBRE À COUCHER
+                    </Link>
+                    <Link to="/gallery?interior=bureau-espace-pro" onClick={() => setIsOpen(false)} className="block py-2 px-3 text-xs font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 rounded transition-smooth uppercase">
+                      BUREAU & ESPACE PRO
+                    </Link>
+                    <Link to="/gallery?interior=cuisine" onClick={() => setIsOpen(false)} className="block py-2 px-3 text-xs font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 rounded transition-smooth uppercase">
+                      CUISINE
+                    </Link>
+                    <Link to="/gallery?interior=hotel-airbnb" onClick={() => setIsOpen(false)} className="block py-2 px-3 text-xs font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 rounded transition-smooth uppercase">
+                      HÔTEL ET AIRBNB
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom Links */}
+              <div className="border-t border-border/50">
+                <Link
+                  to="/reviews"
+                  onClick={() => setIsOpen(false)}
+                  className="block py-3 px-4 text-sm font-semibold text-foreground hover:bg-primary/10 hover:text-primary transition-smooth uppercase tracking-wide"
+                >
+                  AVIS CLIENTS
+                </Link>
+                <Link
+                  to="/gallery?filter=flash"
+                  onClick={() => setIsOpen(false)}
+                  className="block py-3 px-4 text-sm font-semibold text-destructive hover:bg-destructive/10 transition-smooth uppercase tracking-wide"
+                >
+                  🔥 VENTES FLASH
+                </Link>
+              </div>
+            </div>
           </div>
         )}
       </div>
