@@ -93,7 +93,6 @@ const ArtworkCard = ({
                 {title}
               </h3>
             </Link>
-            <p className="text-sm text-muted-foreground">{artist}</p>
             {category && (
               <Badge variant="secondary" className="mt-2 text-xs">
                 {category}

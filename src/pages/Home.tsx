@@ -3,6 +3,9 @@ import { ArrowRight, Sparkles, TrendingUp, Award, Palette, Home as HomeIcon, Lea
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import ArtworkCard from "@/components/ArtworkCard";
+import InstagramFeed from "@/components/InstagramFeed";
+import SocialProof from "@/components/SocialProof";
 import heroImage from "@/assets/hero-art.jpg";
 import artwork1 from "@/assets/artwork-1.jpg";
 import artwork2 from "@/assets/artwork-2.jpg";
@@ -43,36 +46,48 @@ const Home = () => {
   
   const featuredArtworks = [
     {
-      id: 1,
+      id: "1",
       title: "Harmonie Terracotta",
       artist: "Amina Benali",
       price: "2,500 MAD",
+      priceValue: 2500,
       image: artwork1,
-      tag: "Nouveau",
+      category: "Abstrait",
+      badge: "NOUVEAU",
+      inStock: true,
     },
     {
-      id: 2,
+      id: "2",
       title: "Désert d'Or",
       artist: "Karim Essaoui",
       price: "3,200 MAD",
+      priceValue: 3200,
       image: artwork2,
-      tag: "Populaire",
+      category: "Paysage",
+      badge: "BESTSELLER",
+      inStock: true,
     },
     {
-      id: 3,
+      id: "3",
       title: "Géométrie Marocaine",
       artist: "Layla Mansouri",
       price: "2,800 MAD",
+      priceValue: 2800,
       image: artwork3,
-      tag: "Édition Limitée",
+      category: "Géométrique",
+      badge: "ÉDITION LIMITÉE",
+      inStock: true,
     },
     {
-      id: 4,
+      id: "4",
       title: "Jardin Abstrait",
       artist: "Omar Tahiri",
       price: "3,500 MAD",
+      priceValue: 3500,
       image: artwork4,
-      tag: "Nouveau",
+      category: "Botanique",
+      badge: "NOUVEAU",
+      inStock: true,
     },
   ];
 
@@ -334,28 +349,20 @@ const Home = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {featuredArtworks.map((artwork) => (
-              <Link key={artwork.id} to={`/product/${artwork.id}`}>
-                <Card className="overflow-hidden artwork-hover shadow-elegant group">
-                  <div className="relative aspect-[4/5] overflow-hidden">
-                    <img
-                      src={artwork.image}
-                      alt={artwork.title}
-                      className="w-full h-full object-cover transition-smooth group-hover:scale-110"
-                    />
-                    <div className="absolute top-4 left-4">
-                      <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium">
-                        {artwork.tag}
-                      </span>
-                    </div>
-                  </div>
-                  <CardContent className="p-6 space-y-2">
-                    <h3 className="font-serif font-semibold text-lg">{artwork.title}</h3>
-                    <p className="text-sm text-muted-foreground">{artwork.artist}</p>
-                    <p className="text-lg font-bold text-primary">{artwork.price}</p>
-                  </CardContent>
-                </Card>
-              </Link>
+            {featuredArtworks.map((artwork, index) => (
+              <ArtworkCard
+                key={artwork.id}
+                id={artwork.id}
+                title={artwork.title}
+                artist={artwork.artist}
+                price={artwork.price}
+                priceValue={artwork.priceValue}
+                image={artwork.image}
+                category={artwork.category}
+                badge={artwork.badge}
+                inStock={artwork.inStock}
+                index={index}
+              />
             ))}
           </div>
 
@@ -467,6 +474,12 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Instagram Feed */}
+      <InstagramFeed username="naniart.ma" maxPosts={6} />
+
+      {/* Social Proof Notifications */}
+      <SocialProof />
     </div>
   );
 };

@@ -2,11 +2,20 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
+import { useRecentlyViewed } from "@/contexts/RecentlyViewedContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Heart, Share2, ArrowLeft, ZoomIn, Minus, Plus, Check, Truck, Shield, RefreshCw } from "lucide-react";
+import { ShoppingCart, Heart, Share2, ArrowLeft, ZoomIn, Minus, Plus, Check, Truck, Shield, RefreshCw, Ruler } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import ProductReviews from "@/components/ProductReviews";
+import ImageLightbox from "@/components/ImageLightbox";
+import SizeGuideModal from "@/components/SizeGuideModal";
+import RelatedProducts from "@/components/RelatedProducts";
+import RecentlyViewed from "@/components/RecentlyViewed";
+import SocialShare from "@/components/SocialShare";
+import SocialProof from "@/components/SocialProof";
+import CustomerGallery from "@/components/CustomerGallery";
 import artwork1 from "@/assets/artwork-1.jpg";
 import artwork2 from "@/assets/artwork-2.jpg";
 import artwork3 from "@/assets/artwork-3.jpg";
@@ -17,13 +26,15 @@ const Product = () => {
   const { toast } = useToast();
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { addToRecentlyViewed } = useRecentlyViewed();
   
   // State management
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState("moyen");
   const [selectedFormat, setSelectedFormat] = useState("toile");
   const [quantity, setQuantity] = useState(1);
-  const [isZoomed, setIsZoomed] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
 
   // Mock product data with multiple images
   const product = {
@@ -64,10 +75,98 @@ const Product = () => {
     product.basePrice * (selectedSizeOption?.priceMultiplier || 1) + (selectedFormatOption?.priceAdd || 0)
   );
 
-  const similarProducts = [
-    { id: 2, title: "Désert d'Or", artist: "Karim Essaoui", price: "3,200 MAD", image: artwork2 },
-    { id: 3, title: "Géométrie Marocaine", artist: "Layla Mansouri", price: "2,800 MAD", image: artwork3 },
+  // Mock reviews data
+  const mockReviews = [
+    {
+      id: "1",
+      userName: "Sarah M.",
+      rating: 5,
+      date: "2025-01-15T10:00:00Z",
+      comment: "Magnifique œuvre ! Les couleurs sont encore plus belles en vrai. Parfaite pour mon salon.",
+      helpful: 12,
+      verified: true,
+    },
+    {
+      id: "2",
+      userName: "Ahmed K.",
+      rating: 5,
+      date: "2025-01-10T14:30:00Z",
+      comment: "Qualité exceptionnelle. L'emballage était soigné et la livraison rapide. Je recommande !",
+      helpful: 8,
+      verified: true,
+    },
+    {
+      id: "3",
+      userName: "Leila B.",
+      rating: 4,
+      date: "2025-01-05T09:15:00Z",
+      comment: "Très belle pièce, correspond parfaitement à la description. Un petit peu plus chère que prévu avec le cadre mais ça vaut le coup.",
+      helpful: 5,
+      verified: false,
+    },
   ];
+
+  // All products for related products
+  const allProducts = [
+    {
+      id: "1",
+      title: "Harmonie Terracotta",
+      price: "2,500 MAD",
+      priceValue: 2500,
+      image: artwork1,
+      category: "Abstrait",
+      inStock: true,
+    },
+    {
+      id: "2",
+      title: "Désert d'Or",
+      price: "3,200 MAD",
+      priceValue: 3200,
+      image: artwork2,
+      category: "Paysage",
+      inStock: true,
+    },
+    {
+      id: "3",
+      title: "Géométrie Marocaine",
+      price: "2,800 MAD",
+      priceValue: 2800,
+      image: artwork3,
+      category: "Géométrique",
+      inStock: true,
+    },
+    {
+      id: "4",
+      title: "Jardin Abstrait",
+      price: "3,500 MAD",
+      priceValue: 3500,
+      image: artwork1,
+      category: "Abstrait",
+      inStock: true,
+    },
+    {
+      id: "5",
+      title: "Lumière du Sahara",
+      price: "2,900 MAD",
+      priceValue: 2900,
+      image: artwork2,
+      category: "Paysage",
+      inStock: true,
+    },
+  ];
+
+  // Add to recently viewed when component mounts
+  useEffect(() => {
+    addToRecentlyViewed({
+      id: product.id || '',
+      title: product.title,
+      price: `${finalPrice.toLocaleString()} MAD`,
+      priceValue: finalPrice,
+      image: product.images[0],
+      category: product.category,
+      inStock: product.inStock,
+    });
+  }, [id]);
 
   const handleAddToCart = () => {
     // Extract numeric price value
@@ -128,15 +227,16 @@ const Product = () => {
           {/* Image Gallery */}
           <div className="space-y-4">
             {/* Main Image */}
-            <div className="relative aspect-[4/5] overflow-hidden rounded-lg shadow-elegant group">
+            <div 
+              className="relative aspect-[4/5] overflow-hidden rounded-lg shadow-elegant group cursor-pointer"
+              onClick={() => setIsLightboxOpen(true)}
+            >
               <img
                 src={product.images[selectedImage]}
                 alt={product.title}
-                className={`w-full h-full object-cover transition-transform duration-300 ${isZoomed ? 'scale-150 cursor-zoom-out' : 'cursor-zoom-in'}`}
-                onClick={() => setIsZoomed(!isZoomed)}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
               <button
-                onClick={() => setIsZoomed(!isZoomed)}
                 className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <ZoomIn className="h-5 w-5" />
@@ -196,9 +296,23 @@ const Product = () => {
 
             <p className="text-muted-foreground leading-relaxed">{product.description}</p>
 
+            {/* Social Proof Stats */}
+            <SocialProof viewCount={47} recentPurchases={12} />
+
             {/* Size Selection */}
             <div className="space-y-3">
-              <h3 className="font-semibold text-sm">Taille</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-sm">Taille</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowSizeGuide(true)}
+                  className="gap-2 text-xs"
+                >
+                  <Ruler className="h-4 w-4" />
+                  Guide des tailles
+                </Button>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 {sizeOptions.map((size) => (
                   <button
@@ -297,15 +411,13 @@ const Product = () => {
                   <Heart className={`mr-2 h-5 w-5 ${isFavorite ? 'fill-current text-red-500' : ''}`} />
                   Favoris
                 </Button>
-                <Button
-                  variant="outline"
+                <SocialShare
+                  title={product.title}
+                  description={product.description}
+                  image={product.images[0]}
+                  variant="button"
                   size="lg"
-                  className="flex-1"
-                  onClick={handleShare}
-                >
-                  <Share2 className="mr-2 h-5 w-5" />
-                  Partager
-                </Button>
+                />
               </div>
             </div>
             
@@ -359,41 +471,39 @@ const Product = () => {
           </div>
         </div>
 
-        {/* Related Products */}
-        <section>
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-serif font-bold">Œuvres Similaires</h2>
-            <Link to="/gallery" className="text-primary hover:underline text-sm font-medium">
-              Voir tout
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {similarProducts.map((item) => (
-              <Link key={item.id} to={`/product/${item.id}`} className="group">
-                <Card className="overflow-hidden artwork-hover shadow-elegant">
-                  <div className="relative aspect-[4/5] overflow-hidden">
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="w-full h-full object-cover transition-smooth group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-smooth flex items-end p-4">
-                      <Button variant="secondary" size="sm" className="w-full">
-                        Voir Détails
-                      </Button>
-                    </div>
-                  </div>
-                  <CardContent className="p-4 space-y-2">
-                    <h3 className="font-serif font-semibold">{item.title}</h3>
-                    <p className="text-sm text-muted-foreground">{item.artist}</p>
-                    <p className="text-lg font-bold text-primary">{item.price}</p>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
+        {/* Product Reviews */}
+        <section className="border-t border-border pt-16">
+          <ProductReviews productId={product.id || ''} reviews={mockReviews} />
         </section>
       </div>
+
+      {/* Customer Gallery */}
+      <CustomerGallery productId={product.id} />
+
+      {/* Related Products */}
+      <RelatedProducts
+        currentProductId={product.id || ''}
+        category={product.category}
+        allProducts={allProducts}
+      />
+
+      {/* Recently Viewed */}
+      <RecentlyViewed />
+
+      {/* Image Lightbox */}
+      <ImageLightbox
+        images={product.images}
+        currentIndex={selectedImage}
+        isOpen={isLightboxOpen}
+        onClose={() => setIsLightboxOpen(false)}
+        onNavigate={setSelectedImage}
+      />
+
+      {/* Size Guide Modal */}
+      <SizeGuideModal
+        isOpen={showSizeGuide}
+        onClose={() => setShowSizeGuide(false)}
+      />
     </div>
   );
 };

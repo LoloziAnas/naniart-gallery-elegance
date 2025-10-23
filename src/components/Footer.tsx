@@ -154,19 +154,24 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <Link to="/shipping" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Livraison
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <Link to="/return-policy" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Retours
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <Link to="/faq" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   FAQ
-                </a>
+                </Link>
+              </li>
+              <li>
+                <Link to="/size-guide" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                  Guide des Tailles
+                </Link>
               </li>
             </ul>
           </div>

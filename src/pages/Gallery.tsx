@@ -1,9 +1,12 @@
-import { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState, useEffect, useMemo } from "react";
+import { useSearchParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Filter, X, ChevronDown, SlidersHorizontal } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
+import { Filter, X, ChevronDown, SlidersHorizontal, Search, Loader2 } from "lucide-react";
+import ArtworkCard from "@/components/ArtworkCard";
+import ArtworkGridSkeleton from "@/components/ArtworkGridSkeleton";
 import artwork1 from "@/assets/artwork-1.jpg";
 import artwork2 from "@/assets/artwork-2.jpg";
 import artwork3 from "@/assets/artwork-3.jpg";
@@ -13,6 +16,11 @@ const Gallery = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("default");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [priceRange, setPriceRange] = useState([0, 5000]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [itemsToShow, setItemsToShow] = useState(8);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   
   const filter = searchParams.get("filter");
   const theme = searchParams.get("theme");
@@ -20,12 +28,14 @@ const Gallery = () => {
   const color = searchParams.get("color");
   const interior = searchParams.get("interior");
 
-  const allArtworks = [
+  // Wrap allArtworks in useMemo to prevent recreation on every render
+  const allArtworks = useMemo(() => [
     {
-      id: 1,
+      id: "1",
       title: "Harmonie Terracotta",
       artist: "Amina Benali",
       price: "2,500 MAD",
+      priceValue: 2500,
       image: artwork1,
       category: "Abstrait",
       themeSlug: "abstrait",
@@ -35,12 +45,16 @@ const Gallery = () => {
       format: "moyen (50x70cm)",
       color: "terracotta",
       interior: "salon",
+      inStock: true,
+      popularity: 95,
+      dateAdded: "2025-01-15",
     },
     {
-      id: 2,
+      id: "2",
       title: "Désert d'Or",
       artist: "Karim Essaoui",
       price: "3,200 MAD",
+      priceValue: 3200,
       image: artwork2,
       category: "Paysage",
       themeSlug: "nature",
@@ -48,14 +62,18 @@ const Gallery = () => {
       isBestseller: true,
       isFlash: false,
       format: "grand (80x100cm)",
+      inStock: true,
       color: "or",
       interior: "salon",
+      popularity: 98,
+      dateAdded: "2024-11-20",
     },
     {
-      id: 3,
+      id: "3",
       title: "Géométrie Marocaine",
       artist: "Layla Mansouri",
       price: "2,800 MAD",
+      priceValue: 2800,
       image: artwork3,
       category: "Géométrique",
       themeSlug: "maroc",
@@ -65,12 +83,16 @@ const Gallery = () => {
       format: "moyen (50x70cm)",
       color: "bleu",
       interior: "bureau",
+      inStock: true,
+      popularity: 92,
+      dateAdded: "2024-12-10",
     },
     {
-      id: 4,
+      id: "4",
       title: "Jardin Abstrait",
       artist: "Omar Tahiri",
       price: "3,500 MAD",
+      priceValue: 3500,
       image: artwork4,
       category: "Botanique",
       themeSlug: "nature",
@@ -80,12 +102,16 @@ const Gallery = () => {
       format: "grand (80x100cm)",
       color: "vert",
       interior: "chambre",
+      inStock: true,
+      popularity: 88,
+      dateAdded: "2025-01-10",
     },
     {
-      id: 5,
+      id: "5",
       title: "Lumière du Sahara",
       artist: "Fatima Zahra",
       price: "2,900 MAD",
+      priceValue: 2900,
       image: artwork2,
       category: "Paysage",
       themeSlug: "nature",
@@ -95,12 +121,16 @@ const Gallery = () => {
       format: "panoramique",
       color: "or",
       interior: "salon",
+      inStock: true,
+      popularity: 85,
+      dateAdded: "2024-10-15",
     },
     {
-      id: 6,
+      id: "6",
       title: "Rythme Oriental",
       artist: "Hassan Alaoui",
       price: "3,100 MAD",
+      priceValue: 3100,
       image: artwork1,
       category: "Abstrait",
       themeSlug: "abstrait",
@@ -110,12 +140,16 @@ const Gallery = () => {
       format: "moyen (50x70cm)",
       color: "multicolore",
       interior: "entrée",
+      inStock: true,
+      popularity: 90,
+      dateAdded: "2024-09-05",
     },
     {
-      id: 7,
+      id: "7",
       title: "Mosaïque de Fès",
       artist: "Nadia Berrada",
       price: "2,700 MAD",
+      priceValue: 2700,
       image: artwork3,
       category: "Géométrique",
       themeSlug: "maroc",
@@ -125,12 +159,16 @@ const Gallery = () => {
       format: "petit (30x40cm)",
       color: "bleu",
       interior: "cuisine",
+      inStock: true,
+      popularity: 87,
+      dateAdded: "2025-01-05",
     },
     {
-      id: 8,
+      id: "8",
       title: "Fleurs du Printemps",
       artist: "Mehdi Bennani",
       price: "3,300 MAD",
+      priceValue: 3300,
       image: artwork4,
       category: "Botanique",
       themeSlug: "nature",
@@ -140,56 +178,92 @@ const Gallery = () => {
       format: "grand (80x100cm)",
       color: "multicolore",
       interior: "chambre",
+      inStock: true,
+      popularity: 82,
+      dateAdded: "2024-08-20",
     },
-  ];
+  ], []); // Empty dependency array since artwork data is static
 
-  // Filter artworks based on URL parameters
-  let filteredArtworks = allArtworks.filter((artwork) => {
-    if (filter === "nouveautes" && !artwork.isNew) return false;
-    if (filter === "bestsellers" && !artwork.isBestseller) return false;
-    if (filter === "flash" && !artwork.isFlash) return false;
-    if (theme && artwork.themeSlug !== theme) return false;
-    
-    // Improved format matching
-    if (format) {
-      const artworkFormat = artwork.format.toLowerCase();
-      const searchFormat = format.toLowerCase();
-      if (!artworkFormat.includes(searchFormat) && artworkFormat !== searchFormat) return false;
-    }
-    
-    // Improved color matching
-    if (color) {
-      const artworkColor = artwork.color.toLowerCase();
-      const searchColor = color.toLowerCase();
-      if (artworkColor !== searchColor && !artworkColor.includes(searchColor)) return false;
-    }
-    
-    // Improved interior matching
-    if (interior) {
-      const artworkInterior = artwork.interior.toLowerCase();
-      const searchInterior = interior.toLowerCase();
-      if (!artworkInterior.includes(searchInterior) && artworkInterior !== searchInterior) return false;
-    }
-    
-    return true;
-  });
-  
-  // Sort artworks
-  if (sortBy === "price-asc") {
-    filteredArtworks = [...filteredArtworks].sort((a, b) => {
-      const priceA = parseInt(a.price.replace(/[^0-9]/g, ""));
-      const priceB = parseInt(b.price.replace(/[^0-9]/g, ""));
-      return priceA - priceB;
+  // Simulate loading state
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [filter, theme, format, color, interior, searchQuery, priceRange, selectedCategories]);
+
+  // Enhanced filtering with search, price range, and multiple categories
+  const filteredArtworks = useMemo(() => {
+    let filtered = allArtworks.filter((artwork) => {
+      // URL parameter filters
+      if (filter === "nouveautes" && !artwork.isNew) return false;
+      if (filter === "bestsellers" && !artwork.isBestseller) return false;
+      if (filter === "flash" && !artwork.isFlash) return false;
+      if (theme && artwork.themeSlug !== theme) return false;
+      
+      // Format matching
+      if (format) {
+        const artworkFormat = artwork.format.toLowerCase();
+        const searchFormat = format.toLowerCase();
+        if (!artworkFormat.includes(searchFormat) && artworkFormat !== searchFormat) return false;
+      }
+      
+      // Color matching
+      if (color) {
+        const artworkColor = artwork.color.toLowerCase();
+        const searchColor = color.toLowerCase();
+        if (artworkColor !== searchColor && !artworkColor.includes(searchColor)) return false;
+      }
+      
+      // Interior matching
+      if (interior) {
+        const artworkInterior = artwork.interior.toLowerCase();
+        const searchInterior = interior.toLowerCase();
+        if (!artworkInterior.includes(searchInterior) && artworkInterior !== searchInterior) return false;
+      }
+
+      // Search query filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesTitle = artwork.title.toLowerCase().includes(query);
+        const matchesArtist = artwork.artist.toLowerCase().includes(query);
+        const matchesCategory = artwork.category.toLowerCase().includes(query);
+        if (!matchesTitle && !matchesArtist && !matchesCategory) return false;
+      }
+
+      // Price range filter
+      if (artwork.priceValue < priceRange[0] || artwork.priceValue > priceRange[1]) {
+        return false;
+      }
+
+      // Multiple categories filter
+      if (selectedCategories.length > 0) {
+        if (!selectedCategories.includes(artwork.category)) return false;
+      }
+      
+      return true;
     });
-  } else if (sortBy === "price-desc") {
-    filteredArtworks = [...filteredArtworks].sort((a, b) => {
-      const priceA = parseInt(a.price.replace(/[^0-9]/g, ""));
-      const priceB = parseInt(b.price.replace(/[^0-9]/g, ""));
-      return priceB - priceA;
-    });
-  } else if (sortBy === "name") {
-    filteredArtworks = [...filteredArtworks].sort((a, b) => a.title.localeCompare(b.title));
-  }
+
+    // Sorting
+    if (sortBy === "price-asc") {
+      filtered = [...filtered].sort((a, b) => a.priceValue - b.priceValue);
+    } else if (sortBy === "price-desc") {
+      filtered = [...filtered].sort((a, b) => b.priceValue - a.priceValue);
+    } else if (sortBy === "popularity") {
+      filtered = [...filtered].sort((a, b) => b.popularity - a.popularity);
+    } else if (sortBy === "newest") {
+      filtered = [...filtered].sort((a, b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime());
+    } else if (sortBy === "name") {
+      filtered = [...filtered].sort((a, b) => a.title.localeCompare(b.title));
+    }
+
+    return filtered;
+  }, [allArtworks, filter, theme, format, color, interior, searchQuery, priceRange, selectedCategories, sortBy]);
+
+  // Pagination
+  const paginatedArtworks = filteredArtworks.slice(0, itemsToShow);
+  const hasMore = itemsToShow < filteredArtworks.length;
 
   const clearFilters = () => {
     setSearchParams({});
@@ -231,9 +305,31 @@ const Gallery = () => {
         </div>
       </section>
 
-      {/* Filter Bar */}
-      <section className="py-4 border-b border-border bg-background/50">
+      {/* Search and Filter Bar */}
+      <section className="py-6 border-b border-border bg-background/50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Search Bar */}
+          <div className="mb-4">
+            <div className="relative max-w-xl">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Rechercher par titre, artiste ou catégorie..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-6 text-base"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 hover:bg-secondary rounded-full p-1 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3 flex-wrap">
               <Button
@@ -243,7 +339,7 @@ const Gallery = () => {
                 className="gap-2"
               >
                 <SlidersHorizontal className="h-4 w-4" />
-                Filtres
+                Filtres {showFilters ? "▲" : "▼"}
               </Button>
               
               {activeFilters.length > 0 && (
@@ -279,13 +375,15 @@ const Gallery = () => {
             </div>
             
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Trier par:</span>
+              <span className="text-sm text-muted-foreground hidden sm:inline">Trier par:</span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="text-sm border border-border rounded-md px-3 py-1.5 bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                className="text-sm border border-border rounded-md px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary transition-smooth"
               >
                 <option value="default">Par défaut</option>
+                <option value="popularity">Popularité</option>
+                <option value="newest">Plus récent</option>
                 <option value="price-asc">Prix croissant</option>
                 <option value="price-desc">Prix décroissant</option>
                 <option value="name">Nom A-Z</option>
@@ -327,6 +425,49 @@ const Gallery = () => {
                       >
                         Ventes Flash
                       </Link>
+                    </div>
+                  </div>
+
+                  {/* Price Range Filter */}
+                  <div className="border-t pt-4">
+                    <h4 className="text-sm font-medium mb-3">Fourchette de prix</h4>
+                    <div className="space-y-4">
+                      <Slider
+                        value={priceRange}
+                        onValueChange={setPriceRange}
+                        max={5000}
+                        min={0}
+                        step={100}
+                        className="w-full"
+                      />
+                      <div className="flex items-center justify-between text-sm text-muted-foreground">
+                        <span>{priceRange[0].toLocaleString()} MAD</span>
+                        <span>{priceRange[1].toLocaleString()} MAD</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Category Filter */}
+                  <div className="border-t pt-4">
+                    <h4 className="text-sm font-medium mb-3">Catégories</h4>
+                    <div className="space-y-2">
+                      {["Abstrait", "Paysage", "Géométrique", "Botanique"].map((category) => (
+                        <label key={category} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedCategories.includes(category)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedCategories([...selectedCategories, category]);
+                              } else {
+                                setSelectedCategories(selectedCategories.filter(c => c !== category));
+                              }
+                            }}
+                            className="rounded border-border text-primary focus:ring-primary"
+                          />
+                          <span className="text-sm">{category}</span>
+                        </label>
+                      ))}
                     </div>
                   </div>
                   
@@ -563,83 +704,107 @@ const Gallery = () => {
           
           {/* Main Content */}
           <div className="flex-1">
-        {filteredArtworks.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-xl text-muted-foreground">
-              Aucune œuvre ne correspond à vos critères de recherche.
-            </p>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={clearFilters}
-              className="mt-6"
-            >
-              Voir toutes les œuvres
-            </Button>
-          </div>
-        ) : (
-          <>
-            <div className="mb-6 text-sm text-muted-foreground">
-              {filteredArtworks.length} œuvre{filteredArtworks.length > 1 ? "s" : ""} trouvée{filteredArtworks.length > 1 ? "s" : ""}
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {filteredArtworks.map((artwork, index) => (
-                <Link
-                  key={artwork.id}
-                  to={`/product/${artwork.id}`}
-                  className="animate-fade-in"
-                  style={{ animationDelay: `${index * 0.1}s` }}
+            {/* Loading State */}
+            {isLoading ? (
+              <ArtworkGridSkeleton count={8} />
+            ) : filteredArtworks.length === 0 ? (
+              <div className="text-center py-20">
+                <p className="text-xl text-muted-foreground mb-2">
+                  Aucune œuvre ne correspond à vos critères de recherche.
+                </p>
+                {searchQuery && (
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Essayez de modifier votre recherche ou vos filtres
+                  </p>
+                )}
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => {
+                    clearFilters();
+                    setSearchQuery("");
+                    setPriceRange([0, 5000]);
+                    setSelectedCategories([]);
+                  }}
+                  className="mt-6"
                 >
-                  <Card className="overflow-hidden artwork-hover shadow-elegant group">
-                    <div className="relative aspect-[4/5] overflow-hidden">
-                      <img
-                        src={artwork.image}
-                        alt={artwork.title}
-                        className="w-full h-full object-cover transition-smooth group-hover:scale-110"
-                      />
-                      {artwork.isFlash && (
-                        <div className="absolute top-4 left-4">
-                          <Badge variant="destructive" className="text-xs font-medium">
-                            VENTE FLASH
-                          </Badge>
-                        </div>
-                      )}
-                      {artwork.isNew && (
-                        <div className="absolute top-4 left-4">
-                          <Badge variant="default" className="text-xs font-medium">
-                            NOUVEAU
-                          </Badge>
-                        </div>
-                      )}
-                      {artwork.isBestseller && (
-                        <div className="absolute top-4 left-4">
-                          <Badge variant="secondary" className="text-xs font-medium bg-accent text-accent-foreground">
-                            BESTSELLER
-                          </Badge>
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-smooth flex items-end p-6">
-                        <Button variant="secondary" size="sm">
-                          Voir Détails
-                        </Button>
-                      </div>
+                  Réinitialiser tous les filtres
+                </Button>
+              </div>
+            ) : (
+              <>
+                {/* Results Count */}
+                <div className="mb-6 flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    {filteredArtworks.length} œuvre{filteredArtworks.length > 1 ? "s" : ""} trouvée{filteredArtworks.length > 1 ? "s" : ""}
+                    {searchQuery && <span className="font-medium"> pour "{searchQuery}"</span>}
+                  </p>
+                  {selectedCategories.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Catégories:</span>
+                      {selectedCategories.map((cat) => (
+                        <Badge key={cat} variant="secondary" className="text-xs">
+                          {cat}
+                        </Badge>
+                      ))}
                     </div>
-                    <CardContent className="p-6 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-primary font-medium">
-                          {artwork.category}
-                        </span>
-                      </div>
-                      <h3 className="font-serif font-semibold text-lg">{artwork.title}</h3>
-                      <p className="text-sm text-muted-foreground">{artwork.artist}</p>
-                      <p className="text-lg font-bold text-primary">{artwork.price}</p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          </>
-        )}
+                  )}
+                </div>
+
+                {/* Artwork Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                  {paginatedArtworks.map((artwork, index) => (
+                    <ArtworkCard
+                      key={artwork.id}
+                      id={artwork.id}
+                      title={artwork.title}
+                      artist={artwork.artist}
+                      price={artwork.price}
+                      priceValue={artwork.priceValue}
+                      image={artwork.image}
+                      category={artwork.category}
+                      badge={
+                        artwork.isFlash
+                          ? "VENTE FLASH"
+                          : artwork.isNew
+                          ? "NOUVEAU"
+                          : artwork.isBestseller
+                          ? "BESTSELLER"
+                          : undefined
+                      }
+                      inStock={artwork.inStock}
+                      index={index}
+                    />
+                  ))}
+                </div>
+
+                {/* Load More Button */}
+                {hasMore && (
+                  <div className="mt-12 text-center">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={() => setItemsToShow(itemsToShow + 8)}
+                      className="gap-2"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                          Chargement...
+                        </>
+                      ) : (
+                        <>
+                          Charger plus d'œuvres
+                          <span className="text-sm text-muted-foreground">
+                            ({filteredArtworks.length - itemsToShow} restantes)
+                          </span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       </section>

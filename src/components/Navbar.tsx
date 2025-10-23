@@ -4,6 +4,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { Menu, X, ShoppingCart, ChevronDown, Search, User, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import LanguageToggle from "./LanguageToggle";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -433,6 +434,7 @@ const Navbar = () => {
             <Button variant="ghost" size="icon" className="hidden lg:flex h-9 w-9">
               <User className="h-4 w-4" />
             </Button>
+            <LanguageToggle />
             <Link to="/wishlist">
               <Button variant="ghost" size="icon" className="hidden lg:flex h-9 w-9 relative">
                 <Heart className="h-4 w-4" />
