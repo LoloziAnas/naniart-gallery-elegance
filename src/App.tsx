@@ -23,6 +23,7 @@ import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import Wishlist from "./pages/Wishlist";
 import Orders from "./pages/Orders";
+import OrderDetail from "./pages/OrderDetail";
 import UserProfile from "./pages/UserProfile";
 import FAQ from "./pages/FAQ";
 import ReturnPolicy from "./pages/ReturnPolicy";
@@ -59,6 +60,7 @@ const App = () => (
               <Route path="/order-confirmation" element={<OrderConfirmation />} />
               <Route path="/wishlist" element={<Wishlist />} />
               <Route path="/orders" element={<Orders />} />
+              <Route path="/orders/:id" element={<OrderDetail />} />
               <Route path="/profile" element={<UserProfile />} />
               <Route path="/faq" element={<FAQ />} />
               <Route path="/return-policy" element={<ReturnPolicy />} />

@@ -195,6 +195,9 @@ export const ordersAPI = {
   
   getByNumber: (orderNumber: string) =>
     api.get(`/orders/number/${orderNumber}`),
+  
+  cancel: (id: number) =>
+    api.put(`/orders/${id}/cancel`),
 };
 
 export const reviewsAPI = {

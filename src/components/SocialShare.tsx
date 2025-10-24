@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Share2, Facebook, Instagram, Link as LinkIcon, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -29,19 +29,25 @@ const SocialShare = ({
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
   
-  const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
-  const encodedUrl = encodeURIComponent(shareUrl);
-  const encodedTitle = encodeURIComponent(title);
-  const encodedDescription = encodeURIComponent(description);
-  const encodedImage = encodeURIComponent(image);
-
-  const shareLinks = {
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
-    twitter: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
-    pinterest: `https://pinterest.com/pin/create/button/?url=${encodedUrl}&media=${encodedImage}&description=${encodedTitle}`,
-    whatsapp: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
-    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
-  };
+  const shareUrl = useMemo(() => 
+    url || (typeof window !== 'undefined' ? window.location.href : ''),
+    [url]
+  );
+  
+  const shareLinks = useMemo(() => {
+    const encodedUrl = encodeURIComponent(shareUrl);
+    const encodedTitle = encodeURIComponent(title);
+    const encodedDescription = encodeURIComponent(description);
+    const encodedImage = encodeURIComponent(image);
+    
+    return {
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+      twitter: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
+      pinterest: `https://pinterest.com/pin/create/button/?url=${encodedUrl}&media=${encodedImage}&description=${encodedTitle}`,
+      whatsapp: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
+    };
+  }, [shareUrl, title, description, image]);
 
   const handleShare = (platform: keyof typeof shareLinks) => {
     const link = shareLinks[platform];

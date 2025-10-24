@@ -1,0 +1,37 @@
+/* Print styles for order invoices */
+@media print {
+  /* Hide navigation and non-essential elements */
+  nav,
+  footer,
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  /* Reset page margins */
+  @page {
+    margin: 1cm;
+  }
+
+  /* Ensure content fits on page */
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Make sure cards don't break across pages */
+  .print\\:break-inside-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Adjust spacing for print */
+  .print\\:mb-4 {
+    margin-bottom: 1rem !important;
+  }
+
+  /* Ensure colors are printed */
+  * {
+    color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

@@ -114,7 +114,7 @@ const Orders = () => {
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Total:</span>
                         <span className="font-semibold text-lg text-primary">
-                          {order.totalAmount?.toFixed(2)} MAD
+                          {order.total?.toFixed(2)} MAD
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
