@@ -2,9 +2,19 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
-import { Menu, X, ShoppingCart, ChevronDown, Search, User, Heart } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Menu, X, ShoppingCart, ChevronDown, Search, User, Heart, LogOut, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LanguageToggle from "./LanguageToggle";
+import AuthModal from "./AuthModal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -20,9 +30,12 @@ import artwork3 from "@/assets/artwork-3.jpg";
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState<"login" | "register">("login");
   const location = useLocation();
   const { getCartCount } = useCart();
   const { getWishlistCount } = useWishlist();
+  const { user, isAuthenticated, logout } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
   
@@ -431,9 +444,65 @@ const Navbar = () => {
             <Button variant="ghost" size="icon" className="hidden lg:flex h-9 w-9">
               <Search className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="hidden lg:flex h-9 w-9">
-              <User className="h-4 w-4" />
-            </Button>
+            
+            {/* User Menu */}
+            {isAuthenticated && user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="hidden lg:flex h-9 w-9">
+                    <User className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {user.firstName} {user.lastName}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile" className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      Mon profil
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/orders" className="cursor-pointer">
+                      <Package className="mr-2 h-4 w-4" />
+                      Mes commandes
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/wishlist" className="cursor-pointer">
+                      <Heart className="mr-2 h-4 w-4" />
+                      Ma liste de souhaits
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Déconnexion
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hidden lg:flex h-9 w-9"
+                onClick={() => {
+                  setAuthModalTab("login");
+                  setShowAuthModal(true);
+                }}
+              >
+                <User className="h-4 w-4" />
+              </Button>
+            )}
             <LanguageToggle />
             <Link to="/wishlist">
               <Button variant="ghost" size="icon" className="hidden lg:flex h-9 w-9 relative">
@@ -704,21 +773,59 @@ const Navbar = () => {
                     )}
                   </Link>
 
-                  {/* User Account (Placeholder) */}
-                  <button
-                    onClick={() => setIsOpen(false)}
-                    className="w-full flex items-center justify-between py-3 px-4 bg-white rounded-lg hover:bg-primary/5 transition-smooth shadow-sm"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center">
-                        <User className="h-5 w-5 text-foreground" />
+                  {/* User Account */}
+                  {isAuthenticated && user ? (
+                    <div className="space-y-2">
+                      <div className="w-full flex items-center justify-between py-3 px-4 bg-primary/5 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                            <User className="h-5 w-5 text-white" />
+                          </div>
+                          <div className="text-left">
+                            <p className="font-semibold text-sm">{user.firstName} {user.lastName}</p>
+                            <p className="text-xs text-muted-foreground">{user.email}</p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-left">
-                        <p className="font-semibold text-sm">Mon Compte</p>
-                        <p className="text-xs text-muted-foreground">Connexion / Inscription</p>
-                      </div>
+                      <Link
+                        to="/orders"
+                        onClick={() => setIsOpen(false)}
+                        className="w-full flex items-center gap-3 py-2 px-4 hover:bg-primary/5 rounded-lg transition-smooth"
+                      >
+                        <Package className="h-4 w-4" />
+                        <span className="text-sm">Mes commandes</span>
+                      </Link>
+                      <button
+                        onClick={() => {
+                          logout();
+                          setIsOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 py-2 px-4 hover:bg-destructive/5 rounded-lg transition-smooth text-destructive"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span className="text-sm">Déconnexion</span>
+                      </button>
                     </div>
-                  </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setAuthModalTab("login");
+                        setShowAuthModal(true);
+                        setIsOpen(false);
+                      }}
+                      className="w-full flex items-center justify-between py-3 px-4 bg-white rounded-lg hover:bg-primary/5 transition-smooth shadow-sm"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center">
+                          <User className="h-5 w-5 text-foreground" />
+                        </div>
+                        <div className="text-left">
+                          <p className="font-semibold text-sm">Mon Compte</p>
+                          <p className="text-xs text-muted-foreground">Connexion / Inscription</p>
+                        </div>
+                      </div>
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -755,6 +862,13 @@ const Navbar = () => {
           </div>
         )}
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        defaultTab={authModalTab}
+      />
     </nav>
   );
 };

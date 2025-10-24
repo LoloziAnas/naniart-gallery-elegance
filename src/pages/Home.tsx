@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import ArtworkCard from "@/components/ArtworkCard";
+import ArtworkGridSkeleton from "@/components/ArtworkGridSkeleton";
 import InstagramFeed from "@/components/InstagramFeed";
 import SocialProof from "@/components/SocialProof";
+import { useFeaturedProducts, useBestsellers, useNewArrivals } from "@/hooks/useProducts";
 import heroImage from "@/assets/hero-art.jpg";
 import artwork1 from "@/assets/artwork-1.jpg";
 import artwork2 from "@/assets/artwork-2.jpg";
@@ -13,6 +15,11 @@ import artwork3 from "@/assets/artwork-3.jpg";
 import artwork4 from "@/assets/artwork-4.jpg";
 
 const Home = () => {
+  // Fetch real data from backend
+  const { data: featuredProducts, isLoading: loadingFeatured } = useFeaturedProducts(0, 8);
+  const { data: bestsellers, isLoading: loadingBestsellers } = useBestsellers(0, 4);
+  const { data: newArrivals, isLoading: loadingNew } = useNewArrivals(0, 4);
+
   // Theme categories with images
   const themeCategories = [
     {
@@ -44,52 +51,30 @@ const Home = () => {
     },
   ];
   
-  const featuredArtworks = [
-    {
-      id: "1",
-      title: "Harmonie Terracotta",
-      artist: "Amina Benali",
-      price: "2,500 MAD",
-      priceValue: 2500,
-      image: artwork1,
-      category: "Abstrait",
-      badge: "NOUVEAU",
-      inStock: true,
-    },
-    {
-      id: "2",
-      title: "Désert d'Or",
-      artist: "Karim Essaoui",
-      price: "3,200 MAD",
-      priceValue: 3200,
-      image: artwork2,
-      category: "Paysage",
-      badge: "BESTSELLER",
-      inStock: true,
-    },
-    {
-      id: "3",
-      title: "Géométrie Marocaine",
-      artist: "Layla Mansouri",
-      price: "2,800 MAD",
-      priceValue: 2800,
-      image: artwork3,
-      category: "Géométrique",
-      badge: "ÉDITION LIMITÉE",
-      inStock: true,
-    },
-    {
-      id: "4",
-      title: "Jardin Abstrait",
-      artist: "Omar Tahiri",
-      price: "3,500 MAD",
-      priceValue: 3500,
-      image: artwork4,
-      category: "Botanique",
-      badge: "NOUVEAU",
-      inStock: true,
-    },
-  ];
+  // Convert backend products to component format
+  const convertProduct = (product: { id: number; title: string; price: number; images: string[]; category: string; newArrival?: boolean; bestseller?: boolean; limitedEdition?: boolean; flashSale?: boolean; inStock: boolean }) => {
+    let badge = "";
+    if (product.newArrival) badge = "NOUVEAU";
+    else if (product.bestseller) badge = "BESTSELLER";
+    else if (product.limitedEdition) badge = "ÉDITION LIMITÉE";
+    else if (product.flashSale) badge = "VENTE FLASH";
+
+    return {
+      id: product.id.toString(),
+      title: product.title,
+      artist: "Artiste", // Backend doesn't have artist field
+      price: `${product.price.toLocaleString()} MAD`,
+      priceValue: product.price,
+      image: product.images[0] || artwork1,
+      category: product.category,
+      badge,
+      inStock: product.inStock,
+    };
+  };
+
+  const featuredArtworks = featuredProducts ? featuredProducts.map(convertProduct) : [];
+  const bestsellerArtworks = bestsellers ? bestsellers.map(convertProduct) : [];
+  const newArrivalArtworks = newArrivals ? newArrivals.map(convertProduct) : [];
 
   return (
     <div className="min-h-screen">
@@ -348,23 +333,27 @@ const Home = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {featuredArtworks.map((artwork, index) => (
-              <ArtworkCard
-                key={artwork.id}
-                id={artwork.id}
-                title={artwork.title}
-                artist={artwork.artist}
-                price={artwork.price}
-                priceValue={artwork.priceValue}
-                image={artwork.image}
-                category={artwork.category}
-                badge={artwork.badge}
-                inStock={artwork.inStock}
-                index={index}
-              />
-            ))}
-          </div>
+          {loadingFeatured ? (
+            <ArtworkGridSkeleton />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {featuredArtworks.map((artwork, index) => (
+                <ArtworkCard
+                  key={artwork.id}
+                  id={artwork.id}
+                  title={artwork.title}
+                  artist={artwork.artist}
+                  price={artwork.price}
+                  priceValue={artwork.priceValue}
+                  image={artwork.image}
+                  category={artwork.category}
+                  badge={artwork.badge}
+                  inStock={artwork.inStock}
+                  index={index}
+                />
+              ))}
+            </div>
+          )}
 
           <div className="text-center mt-12">
             <Button asChild variant="hero" size="lg">

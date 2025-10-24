@@ -1,20 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CreditCard, Smartphone, Banknote, ShoppingBag, Check } from "lucide-react";
+import { CreditCard, Smartphone, Banknote, ShoppingBag, Check, User as UserIcon, LogIn } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import AuthModal from "@/components/AuthModal";
+import { useCreateOrder } from "@/hooks/useOrders";
 
 const Checkout = () => {
   const navigate = useNavigate();
   const { items, getCartTotal, clearCart } = useCart();
+  const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const createOrder = useCreateOrder();
   const [step, setStep] = useState(1);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [formData, setFormData] = useState({
     // Shipping Info
     firstName: "",
@@ -29,6 +36,29 @@ const Checkout = () => {
     // Terms
     acceptTerms: false,
   });
+
+  // Pre-fill form with user data if authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setFormData(prev => ({
+        ...prev,
+        firstName: user.firstName || prev.firstName,
+        lastName: user.lastName || prev.lastName,
+        email: user.email || prev.email,
+        phone: user.phone || prev.phone,
+        address: user.address || prev.address,
+        city: user.city || prev.city,
+        postalCode: user.postalCode || prev.postalCode,
+      }));
+    }
+  }, [isAuthenticated, user]);
+
+  // Show auth prompt on mount if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated && items.length > 0) {
+      setShowAuthPrompt(true);
+    }
+  }, []);
 
   const shippingCost = getCartTotal() >= 500 ? 0 : 50;
   const total = getCartTotal() + shippingCost;
@@ -74,7 +104,7 @@ const Checkout = () => {
     setStep(step - 1);
   };
 
-  const handleSubmitOrder = () => {
+  const handleSubmitOrder = async () => {
     if (!formData.acceptTerms) {
       toast({
         title: "Conditions non acceptées",
@@ -84,27 +114,122 @@ const Checkout = () => {
       return;
     }
 
-    // Simulate order processing
-    toast({
-      title: "Commande en cours...",
-      description: "Traitement de votre commande",
-    });
+    // Check if user is authenticated for backend order creation
+    if (!isAuthenticated) {
+      toast({
+        title: "Connexion requise",
+        description: "Veuillez vous connecter pour finaliser votre commande",
+        variant: "destructive",
+      });
+      setShowAuthModal(true);
+      return;
+    }
 
-    setTimeout(() => {
+    try {
+      // Prepare order data for backend
+      const orderData = {
+        items: items.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })),
+        paymentMethod: formData.paymentMethod === 'card' ? 'CREDIT_CARD' as const :
+                       formData.paymentMethod === 'mobile' ? 'MOBILE_PAYMENT' as const :
+                       formData.paymentMethod === 'bank' ? 'BANK_TRANSFER' as const :
+                       'CASH_ON_DELIVERY' as const,
+        shippingFirstName: formData.firstName,
+        shippingLastName: formData.lastName,
+        shippingEmail: formData.email,
+        shippingPhone: formData.phone,
+        shippingAddress: formData.address,
+        shippingCity: formData.city,
+        shippingPostalCode: formData.postalCode,
+        shippingCountry: 'Maroc',
+        notes: '',
+      };
+
+      // Create order via backend
+      const response = await createOrder.mutateAsync(orderData);
+      
+      // Clear cart and navigate to confirmation
       clearCart();
       navigate("/order-confirmation", {
         state: {
-          orderNumber: `NAN${Date.now().toString().slice(-6)}`,
-          total,
+          orderNumber: response.orderNumber,
+          total: response.totalAmount,
           formData,
         },
       });
-    }, 1500);
+    } catch (error) {
+      // Error is handled by the mutation
+      console.error('Order creation failed:', error);
+    }
   };
 
   return (
     <div className="min-h-screen py-12 bg-secondary/10">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Authentication Prompt */}
+        {showAuthPrompt && !isAuthenticated && (
+          <div className="max-w-6xl mx-auto mb-6">
+            <Card className="border-primary/50 bg-primary/5">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <UserIcon className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold mb-2">
+                      Connectez-vous pour une expérience optimale
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      En vous connectant, vos informations seront automatiquement remplies et vous pourrez suivre votre commande.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        onClick={() => {
+                          setShowAuthModal(true);
+                          setShowAuthPrompt(false);
+                        }}
+                        className="gap-2"
+                      >
+                        <LogIn className="h-4 w-4" />
+                        Se connecter
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowAuthPrompt(false)}
+                      >
+                        Continuer sans compte
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* User Info Display for Authenticated Users */}
+        {isAuthenticated && user && (
+          <div className="max-w-6xl mx-auto mb-6">
+            <Card className="border-green-500/50 bg-green-50/50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
+                    <Check className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">
+                      Connecté en tant que {user.firstName} {user.lastName}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Progress Steps */}
         <div className="max-w-4xl mx-auto mb-8">
           <div className="flex items-center justify-between">
@@ -163,7 +288,15 @@ const Checkout = () => {
                 {/* Step 1: Shipping Information */}
                 {step === 1 && (
                   <div className="space-y-6">
-                    <h2 className="text-2xl font-serif font-bold">Informations de livraison</h2>
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-2xl font-serif font-bold">Informations de livraison</h2>
+                      {isAuthenticated && (
+                        <div className="flex items-center gap-2 text-sm text-green-600">
+                          <Check className="h-4 w-4" />
+                          <span>Informations pré-remplies</span>
+                        </div>
+                      )}
+                    </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
@@ -446,6 +579,13 @@ const Checkout = () => {
           </div>
         </div>
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        defaultTab="login"
+      />
     </div>
   );
 };

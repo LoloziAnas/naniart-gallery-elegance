@@ -7,6 +7,7 @@ import { CartProvider } from "./contexts/CartContext";
 import { WishlistProvider } from "./contexts/WishlistContext";
 import { RecentlyViewedProvider } from "./contexts/RecentlyViewedContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import { AuthProvider } from "./contexts/AuthContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import WhatsAppButton from "./components/WhatsAppButton";
@@ -21,6 +22,8 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import Wishlist from "./pages/Wishlist";
+import Orders from "./pages/Orders";
+import UserProfile from "./pages/UserProfile";
 import FAQ from "./pages/FAQ";
 import ReturnPolicy from "./pages/ReturnPolicy";
 import ShippingInfo from "./pages/ShippingInfo";
@@ -32,10 +35,11 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <LanguageProvider>
-        <RecentlyViewedProvider>
-          <WishlistProvider>
-            <CartProvider>
+      <AuthProvider>
+        <LanguageProvider>
+          <RecentlyViewedProvider>
+            <WishlistProvider>
+              <CartProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -54,6 +58,8 @@ const App = () => (
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/order-confirmation" element={<OrderConfirmation />} />
               <Route path="/wishlist" element={<Wishlist />} />
+              <Route path="/orders" element={<Orders />} />
+              <Route path="/profile" element={<UserProfile />} />
               <Route path="/faq" element={<FAQ />} />
               <Route path="/return-policy" element={<ReturnPolicy />} />
               <Route path="/shipping" element={<ShippingInfo />} />
@@ -66,10 +72,11 @@ const App = () => (
           <WhatsAppButton />
         </div>
         </BrowserRouter>
-            </CartProvider>
-          </WishlistProvider>
-        </RecentlyViewedProvider>
-      </LanguageProvider>
+              </CartProvider>
+            </WishlistProvider>
+          </RecentlyViewedProvider>
+        </LanguageProvider>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

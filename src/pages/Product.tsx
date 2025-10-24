@@ -6,7 +6,7 @@ import { useRecentlyViewed } from "@/contexts/RecentlyViewedContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Heart, Share2, ArrowLeft, ZoomIn, Minus, Plus, Check, Truck, Shield, RefreshCw, Ruler } from "lucide-react";
+import { ShoppingCart, Heart, Share2, ArrowLeft, ZoomIn, Minus, Plus, Check, Truck, Shield, RefreshCw, Ruler, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ProductReviews from "@/components/ProductReviews";
 import ImageLightbox from "@/components/ImageLightbox";
@@ -16,17 +16,24 @@ import RecentlyViewed from "@/components/RecentlyViewed";
 import SocialShare from "@/components/SocialShare";
 import SocialProof from "@/components/SocialProof";
 import CustomerGallery from "@/components/CustomerGallery";
+import { useProduct, useRelatedProducts } from "@/hooks/useProducts";
+import { useWishlistAPI } from "@/hooks/useWishlistAPI";
+import { useProductReviews } from "@/hooks/useReviews";
 import artwork1 from "@/assets/artwork-1.jpg";
-import artwork2 from "@/assets/artwork-2.jpg";
-import artwork3 from "@/assets/artwork-3.jpg";
 
 const Product = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { addToCart } = useCart();
-  const { toggleWishlist, isInWishlist } = useWishlist();
+  const { toggleWishlist: toggleWishlistLocal, isInWishlist: isInWishlistLocal } = useWishlist();
   const { addToRecentlyViewed } = useRecentlyViewed();
+  
+  // Backend data fetching
+  const { data: product, isLoading: productLoading, error: productError } = useProduct(Number(id));
+  const { data: relatedProducts } = useRelatedProducts(Number(id), 0, 4);
+  const { data: reviewsData } = useProductReviews(Number(id), 0, 10);
+  const { toggleWishlist, isInWishlist } = useWishlistAPI();
   
   // State management
   const [selectedImage, setSelectedImage] = useState(0);
@@ -36,21 +43,24 @@ const Product = () => {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [showSizeGuide, setShowSizeGuide] = useState(false);
 
-  // Mock product data with multiple images
-  const product = {
-    id: id,
-    title: "Harmonie Terracotta",
-    artist: "Amina Benali",
-    basePrice: 2500,
-    images: [artwork1, artwork2, artwork3, artwork1],
-    description:
-      "Cette œuvre abstraite capture l'essence du Maroc à travers une palette chaleureuse de terracotta et d'or. Les formes géométriques s'entrelacent pour créer une composition harmonieuse qui évoque les traditions artisanales marocaines tout en adoptant une esthétique résolument contemporaine.",
-    medium: "Acrylique sur toile",
-    year: "2024",
-    category: "Abstrait",
-    inStock: true,
-    stockCount: 5,
-  };
+  // Product images with fallback (must be before early returns)
+  const productImages = product?.images && product.images.length > 0 
+    ? product.images 
+    : [artwork1];
+
+  // Add to recently viewed when product loads
+  useEffect(() => {
+    if (product) {
+      addToRecentlyViewed({
+        id: product.id.toString(),
+        title: product.title,
+        price: `${product.price.toLocaleString()} MAD`,
+        priceValue: product.price,
+        image: productImages[0],
+        category: product.category,
+      });
+    }
+  }, [product, addToRecentlyViewed, productImages]);
   
   // Size options with prices
   const sizeOptions = [
@@ -68,105 +78,64 @@ const Product = () => {
     { id: "cadre-dore", label: "Cadre doré", priceAdd: 400 },
   ];
   
-  // Calculate final price
+  // Calculate final price based on backend product price
   const selectedSizeOption = sizeOptions.find(s => s.id === selectedSize);
   const selectedFormatOption = formatOptions.find(f => f.id === selectedFormat);
+  const basePrice = product?.price || 0;
   const finalPrice = Math.round(
-    product.basePrice * (selectedSizeOption?.priceMultiplier || 1) + (selectedFormatOption?.priceAdd || 0)
+    basePrice * (selectedSizeOption?.priceMultiplier || 1) + (selectedFormatOption?.priceAdd || 0)
   );
 
-  // Mock reviews data
-  const mockReviews = [
-    {
-      id: "1",
-      userName: "Sarah M.",
-      rating: 5,
-      date: "2025-01-15T10:00:00Z",
-      comment: "Magnifique œuvre ! Les couleurs sont encore plus belles en vrai. Parfaite pour mon salon.",
-      helpful: 12,
-      verified: true,
-    },
-    {
-      id: "2",
-      userName: "Ahmed K.",
-      rating: 5,
-      date: "2025-01-10T14:30:00Z",
-      comment: "Qualité exceptionnelle. L'emballage était soigné et la livraison rapide. Je recommande !",
-      helpful: 8,
-      verified: true,
-    },
-    {
-      id: "3",
-      userName: "Leila B.",
-      rating: 4,
-      date: "2025-01-05T09:15:00Z",
-      comment: "Très belle pièce, correspond parfaitement à la description. Un petit peu plus chère que prévu avec le cadre mais ça vaut le coup.",
-      helpful: 5,
-      verified: false,
-    },
-  ];
+  // Loading state
+  if (productLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Chargement du produit...</p>
+        </div>
+      </div>
+    );
+  }
 
-  // All products for related products
-  const allProducts = [
-    {
-      id: "1",
-      title: "Harmonie Terracotta",
-      price: "2,500 MAD",
-      priceValue: 2500,
-      image: artwork1,
-      category: "Abstrait",
-      inStock: true,
-    },
-    {
-      id: "2",
-      title: "Désert d'Or",
-      price: "3,200 MAD",
-      priceValue: 3200,
-      image: artwork2,
-      category: "Paysage",
-      inStock: true,
-    },
-    {
-      id: "3",
-      title: "Géométrie Marocaine",
-      price: "2,800 MAD",
-      priceValue: 2800,
-      image: artwork3,
-      category: "Géométrique",
-      inStock: true,
-    },
-    {
-      id: "4",
-      title: "Jardin Abstrait",
-      price: "3,500 MAD",
-      priceValue: 3500,
-      image: artwork1,
-      category: "Abstrait",
-      inStock: true,
-    },
-    {
-      id: "5",
-      title: "Lumière du Sahara",
-      price: "2,900 MAD",
-      priceValue: 2900,
-      image: artwork2,
-      category: "Paysage",
-      inStock: true,
-    },
-  ];
+  // Error state
+  if (productError || !product) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Produit non trouvé</h2>
+          <p className="text-muted-foreground mb-6">
+            Le produit que vous recherchez n'existe pas ou a été supprimé.
+          </p>
+          <Button onClick={() => navigate("/gallery")}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Retour à la galerie
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
-  // Add to recently viewed when component mounts
-  useEffect(() => {
-    addToRecentlyViewed({
-      id: product.id || '',
-      title: product.title,
-      price: `${finalPrice.toLocaleString()} MAD`,
-      priceValue: finalPrice,
-      image: product.images[0],
-      category: product.category,
-      inStock: product.inStock,
-    });
-  }, [id]);
+  // Reviews from backend
+  const reviews = reviewsData?.content || [];
+
+  // Fallback values for missing backend fields
+  const artist = "Artiste Marocain";
+  const medium = "Acrylique sur toile";
+  const year = "2024";
+  const stockCount = product.inStock ? 10 : 0;
+
+  // Convert related products from backend
+  const relatedProductsFormatted = relatedProducts?.map(p => ({
+    id: p.id.toString(),
+    title: p.title,
+    price: `${p.price.toLocaleString()} MAD`,
+    priceValue: p.price,
+    image: p.images && p.images.length > 0 ? p.images[0] : artwork1,
+    category: p.category,
+    inStock: p.inStock,
+  })) || [];
+
 
   const handleAddToCart = () => {
     // Extract numeric price value
@@ -176,11 +145,12 @@ const Product = () => {
     for (let i = 0; i < quantity; i++) {
       addToCart({
         id: `${product.id}-${selectedSize}-${selectedFormat}-${Date.now()}-${i}`,
+        productId: product.id,
         title: product.title,
-        artist: product.artist,
+        artist: artist,
         price: `${priceValue.toLocaleString()} MAD`,
         priceValue: priceValue,
-        image: product.images[0],
+        image: productImages[0],
         size: selectedSizeOption?.label,
         frame: selectedFormatOption?.label,
       });
@@ -188,19 +158,10 @@ const Product = () => {
   };
   
   const handleToggleFavorite = () => {
-    toggleWishlist({
-      id: product.id || '',
-      title: product.title,
-      artist: product.artist,
-      price: `${finalPrice.toLocaleString()} MAD`,
-      priceValue: finalPrice,
-      image: product.images[0],
-      category: product.category,
-      inStock: product.inStock,
-    });
+    toggleWishlist(product.id);
   };
   
-  const isFavorite = isInWishlist(product.id || '');
+  const isFavorite = isInWishlist(product.id);
   
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -277,19 +238,19 @@ const Product = () => {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <Badge variant="secondary">{product.category}</Badge>
-                {product.inStock && product.stockCount <= 5 && (
+                {product.inStock && stockCount <= 5 && (
                   <Badge variant="destructive">Dernières pièces</Badge>
                 )}
               </div>
               <h1 className="text-4xl md:text-5xl font-serif font-bold mt-2">{product.title}</h1>
-              <p className="text-xl text-muted-foreground mt-2">Par {product.artist}</p>
+              <p className="text-xl text-muted-foreground mt-2">Par {artist}</p>
             </div>
 
             <div className="flex items-baseline space-x-4">
               <span className="text-4xl font-bold text-primary">{finalPrice.toLocaleString()} MAD</span>
               {selectedSizeOption?.priceMultiplier !== 1 && (
                 <span className="text-lg text-muted-foreground line-through">
-                  {product.basePrice.toLocaleString()} MAD
+                  {basePrice.toLocaleString()} MAD
                 </span>
               )}
             </div>
@@ -327,7 +288,7 @@ const Product = () => {
                     <div className="font-semibold text-sm">{size.label}</div>
                     <div className="text-xs text-muted-foreground mt-1">{size.dimensions}</div>
                     <div className="text-sm font-medium text-primary mt-2">
-                      {Math.round(product.basePrice * size.priceMultiplier).toLocaleString()} MAD
+                      {Math.round(basePrice * size.priceMultiplier).toLocaleString()} MAD
                     </div>
                   </button>
                 ))}
@@ -378,13 +339,13 @@ const Product = () => {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => setQuantity(Math.min(product.stockCount, quantity + 1))}
-                  disabled={quantity >= product.stockCount}
+                  onClick={() => setQuantity(Math.min(stockCount, quantity + 1))}
+                  disabled={quantity >= stockCount}
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
                 <span className="text-sm text-muted-foreground">
-                  {product.stockCount} disponible{product.stockCount > 1 ? 's' : ''}
+                  {stockCount} disponible{stockCount > 1 ? 's' : ''}
                 </span>
               </div>
             </div>
@@ -456,11 +417,11 @@ const Product = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Médium</span>
-                  <span className="font-medium">{product.medium}</span>
+                  <span className="font-medium">{medium}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Année</span>
-                  <span className="font-medium">{product.year}</span>
+                  <span className="font-medium">{year}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Format</span>
@@ -473,7 +434,7 @@ const Product = () => {
 
         {/* Product Reviews */}
         <section className="border-t border-border pt-16">
-          <ProductReviews productId={product.id || ''} reviews={mockReviews} />
+          <ProductReviews productId={product.id.toString()} reviews={reviews} />
         </section>
       </div>
 
@@ -482,9 +443,9 @@ const Product = () => {
 
       {/* Related Products */}
       <RelatedProducts
-        currentProductId={product.id || ''}
+        currentProductId={product.id.toString()}
         category={product.category}
-        allProducts={allProducts}
+        allProducts={relatedProductsFormatted}
       />
 
       {/* Recently Viewed */}
@@ -492,7 +453,7 @@ const Product = () => {
 
       {/* Image Lightbox */}
       <ImageLightbox
-        images={product.images}
+        images={productImages}
         currentIndex={selectedImage}
         isOpen={isLightboxOpen}
         onClose={() => setIsLightboxOpen(false)}

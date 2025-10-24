@@ -11,8 +11,10 @@ const Wishlist = () => {
   const { addToCart } = useCart();
 
   const handleAddToCart = (item: any) => {
+    const productId = typeof item.id === 'string' ? parseInt(item.id) : item.id;
     addToCart({
-      id: item.id,
+      id: `${item.id}-standard-standard-${Date.now()}`,
+      productId: productId,
       title: item.title,
       artist: item.artist,
       price: item.price,
@@ -23,8 +25,10 @@ const Wishlist = () => {
 
   const handleAddAllToCart = () => {
     items.forEach((item) => {
+      const productId = typeof item.id === 'string' ? parseInt(item.id) : item.id;
       addToCart({
-        id: item.id,
+        id: `${item.id}-standard-standard-${Date.now()}`,
+        productId: productId,
         title: item.title,
         artist: item.artist,
         price: item.price,

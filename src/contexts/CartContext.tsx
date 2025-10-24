@@ -2,7 +2,8 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { useToast } from "@/hooks/use-toast";
 
 export interface CartItem {
-  id: string;
+  id: string; // Composite ID for cart uniqueness (productId-size-frame-timestamp)
+  productId: number; // Numeric product ID for backend
   title: string;
   artist: string;
   price: string;
@@ -34,9 +35,29 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const savedCart = localStorage.getItem("naniart-cart");
     if (savedCart) {
       try {
-        setItems(JSON.parse(savedCart));
+        const parsedCart = JSON.parse(savedCart);
+        
+        // Migrate old cart items that don't have productId
+        const migratedCart = parsedCart.map((item: any) => {
+          if (!item.productId && item.id) {
+            // Extract productId from composite ID (format: "19-size-frame-timestamp")
+            const productId = parseInt(item.id.split('-')[0]);
+            console.log(`Migrating cart item: ${item.id} -> productId: ${productId}`);
+            return { ...item, productId };
+          }
+          return item;
+        });
+        
+        setItems(migratedCart);
+        
+        // Save migrated cart back to localStorage
+        if (migratedCart.some((item: any) => item.productId)) {
+          localStorage.setItem("naniart-cart", JSON.stringify(migratedCart));
+        }
       } catch (error) {
         console.error("Failed to load cart:", error);
+        // Clear corrupted cart
+        localStorage.removeItem("naniart-cart");
       }
     }
   }, []);

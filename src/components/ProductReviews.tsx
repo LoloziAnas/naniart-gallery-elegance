@@ -6,24 +6,30 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Star, ThumbsUp, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Review as APIReview } from "@/lib/api";
 
-interface Review {
+// Extended review type with local state
+interface Review extends Omit<APIReview, 'id' | 'productId' | 'title'> {
   id: string;
-  userName: string;
-  rating: number;
   date: string;
-  comment: string;
   helpful: number;
-  verified: boolean;
 }
 
 interface ProductReviewsProps {
   productId: string;
-  reviews?: Review[];
+  reviews?: APIReview[];
 }
 
 const ProductReviews = ({ productId, reviews: initialReviews = [] }: ProductReviewsProps) => {
-  const [reviews, setReviews] = useState<Review[]>(initialReviews);
+  // Transform API reviews to component format
+  const transformedReviews: Review[] = initialReviews.map(review => ({
+    ...review,
+    id: review.id.toString(),
+    date: review.createdAt,
+    helpful: 0, // Initialize helpful count
+  }));
+  
+  const [reviews, setReviews] = useState<Review[]>(transformedReviews);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -62,6 +68,7 @@ const ProductReviews = ({ productId, reviews: initialReviews = [] }: ProductRevi
       userName: userName.trim(),
       rating,
       date: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       comment: comment.trim(),
       helpful: 0,
       verified: false,
